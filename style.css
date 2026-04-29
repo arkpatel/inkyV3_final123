@@ -1,0 +1,609 @@
+/* ============================================================
+   FINANCIAL CHOICES — Enhanced Web Export Styles
+   style.css
+
+   Visual features:
+   ─ Per-path Google Font (font changes with each theme)
+   ─ Animated gradient background per theme
+   ─ Path banner image (SVG) injected by JS above story
+   ─ Typewriter reveal animation on new paragraphs
+   ─ Choice buttons with shimmer hover + slide
+   ─ WIN/MID/LOSS ending banners
+   ─ HP color bar (green → yellow → orange → red)
+   ─ Scanline texture overlay
+   ============================================================ */
+
+/* ── Google Fonts ───────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&family=Oswald:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&family=Bebas+Neue&family=Quicksand:wght@400;600&family=Special+Elite&display=swap');
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Base body ──────────────────────────────────────────── */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.8;
+  background-color: #0d0d0d;
+  color: #e8e8e0;
+
+  --accent:       #9e9e9e;
+  --accent-glow:  rgba(158,158,158,0.3);
+  --bg-from:      #0d0d0d;
+  --bg-to:        #111111;
+  --sep-color:    #444444;
+  --font-body:    'Lora', Georgia, serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
+
+  transition: background-color 0.7s ease, color 0.4s ease;
+}
+
+/* ── Animated background ────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, var(--bg-from) 0%, var(--bg-to) 100%);
+  z-index: -2;
+  transition: background 0.7s ease;
+}
+
+/* Scanline texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.06) 2px,
+    rgba(255,255,255,0.06) 4px
+  );
+}
+
+/* ── Page layout ────────────────────────────────────────── */
+#outer-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 100px;
+}
+
+/* ── Path banner ────────────────────────────────────────── */
+#path-banner {
+  width: 100%;
+  height: 150px;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  display: none;
+}
+
+#path-banner.visible {
+  display: block;
+  animation: bannerIn 0.55s ease forwards;
+}
+
+#path-banner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes bannerIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Story area ─────────────────────────────────────────── */
+#story {
+  padding: 28px 26px 40px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  font-family: var(--font-body);
+}
+
+#path-banner:not(.visible) ~ #story,
+#story:first-child {
+  border-radius: 8px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Paragraphs + typewriter ────────────────────────────── */
+p {
+  margin: 0.55em 0;
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+}
+
+@keyframes paraReveal {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+p.new-para {
+  opacity: 0;
+  animation: paraReveal 0.3s ease forwards;
+}
+
+/* Stagger each paragraph */
+p.new-para:nth-child(1)  { animation-delay: 0.00s; }
+p.new-para:nth-child(2)  { animation-delay: 0.06s; }
+p.new-para:nth-child(3)  { animation-delay: 0.12s; }
+p.new-para:nth-child(4)  { animation-delay: 0.18s; }
+p.new-para:nth-child(5)  { animation-delay: 0.24s; }
+p.new-para:nth-child(6)  { animation-delay: 0.30s; }
+p.new-para:nth-child(7)  { animation-delay: 0.36s; }
+p.new-para:nth-child(8)  { animation-delay: 0.42s; }
+p.new-para:nth-child(9)  { animation-delay: 0.48s; }
+p.new-para:nth-child(10) { animation-delay: 0.54s; }
+
+/* Header lines (━━━ lines) */
+p.chapter-header {
+  font-family: var(--font-heading);
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin: 1.1em 0 0.25em;
+  opacity: 0.85;
+}
+
+/* ── Choices ────────────────────────────────────────────── */
+#choices {
+  margin-top: 26px;
+  padding: 0 26px;
+}
+
+.choice {
+  display: block;
+  width: 100%;
+  margin: 9px 0;
+  padding: 13px 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background  0.2s ease,
+    color       0.2s ease,
+    box-shadow  0.2s ease,
+    transform   0.15s ease;
+}
+
+/* Shimmer sweep on hover */
+.choice::before {
+  content: '';
+  position: absolute;
+  left: -80%;
+  top: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.1),
+    transparent
+  );
+  transform: skewX(-18deg);
+  transition: left 0.45s ease;
+}
+
+.choice:hover::before { left: 135%; }
+
+.choice:hover {
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 0 18px var(--accent-glow);
+  transform: translateX(5px);
+}
+
+.choice:active {
+  transform: translateX(2px) scale(0.985);
+}
+
+/* ── HUD bars ───────────────────────────────────────────── */
+.hud-bar {
+  color: var(--sep-color);
+  letter-spacing: 0.05em;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.83em;
+}
+
+body.hp-low      .hud-bar { color: #b85c00; }
+body.hp-critical .hud-bar { color: #bb2200; }
+
+/* HP value */
+.hp-display {
+  font-weight: 700;
+  font-family: 'Share Tech Mono', monospace;
+  transition: color 0.5s ease;
+}
+
+body.hp-high     .hp-display { color: #4caf50; }
+body.hp-medium   .hp-display { color: #ffeb3b; }
+body.hp-low      .hp-display { color: #ff9800; }
+body.hp-critical .hp-display {
+  color: #f44336;
+  animation: hpPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes hpPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Ending blocks ──────────────────────────────────────── */
+.ending-block {
+  margin: 28px 0;
+  padding: 24px 28px;
+  border-radius: 6px;
+  border-left: 6px solid var(--ending-color, #9e9e9e);
+  background: rgba(255,255,255,0.03);
+  animation: endingReveal 0.7s ease forwards;
+}
+
+@keyframes endingReveal {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* WIN */
+body.ending-win .ending-block {
+  --ending-color: #ffd700;
+  border-color:   #ffd700;
+  box-shadow:     0 0 36px rgba(255,215,0,0.2), inset 0 0 50px rgba(255,215,0,0.04);
+  font-family:    'Playfair Display', Georgia, serif;
+  font-weight:    700;
+  font-size:      1.05em;
+  color:          #fffde7;
+}
+
+/* MID */
+body.ending-mid .ending-block {
+  --ending-color: #90a4ae;
+  border-color:   #90a4ae;
+  box-shadow:     0 0 14px rgba(144,164,174,0.15);
+  color:          #e0e0e0;
+}
+
+/* LOSS */
+body.ending-loss .ending-block {
+  --ending-color: #ef5350;
+  border-color:   #ef5350;
+  box-shadow:     0 0 26px rgba(239,83,80,0.2);
+  font-style:     italic;
+  color:          #ffcdd2;
+  filter:         saturate(0.8);
+}
+
+/* ══════════════════════════════════════════════════════════
+   PER-THEME STYLES
+   Each theme: accent colour, background, font, banner image
+   ══════════════════════════════════════════════════════════ */
+
+/* 📈 INVEST — Playfair serif, forest green */
+body.theme-invest {
+  --accent:       #4caf50;
+  --accent-glow:  rgba(76,175,80,0.4);
+  --bg-from:      #05120b;
+  --bg-to:        #091a0e;
+  --sep-color:    #2e7d32;
+  --font-body:    'Playfair Display', Georgia, serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
+  font-family:    'Playfair Display', Georgia, serif;
+}
+
+/* 🚀 CRYPTO — Share Tech Mono, electric purple */
+body.theme-crypto {
+  --accent:       #ce93d8;
+  --accent-glow:  rgba(206,147,216,0.4);
+  --bg-from:      #08001a;
+  --bg-to:        #100025;
+  --sep-color:    #7b1fa2;
+  --font-body:    'Share Tech Mono', monospace;
+  --font-heading: 'Share Tech Mono', monospace;
+  font-family:    'Share Tech Mono', monospace;
+  font-size:      15px;
+  line-height:    1.75;
+}
+
+/* 🎰 GAMBLE — Oswald bold, deep casino red */
+body.theme-gamble {
+  --accent:       #ef5350;
+  --accent-glow:  rgba(239,83,80,0.4);
+  --bg-from:      #130202;
+  --bg-to:        #1a0404;
+  --sep-color:    #b71c1c;
+  --font-body:    'Oswald', sans-serif;
+  --font-heading: 'Oswald', sans-serif;
+  font-family:    'Oswald', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* 🛍️ SPEND — Quicksand, warm amber */
+body.theme-spend {
+  --accent:       #ffb74d;
+  --accent-glow:  rgba(255,183,77,0.4);
+  --bg-from:      #130d00;
+  --bg-to:        #1a1200;
+  --sep-color:    #e65100;
+  --font-body:    'Quicksand', sans-serif;
+  --font-heading: 'Quicksand', sans-serif;
+  font-family:    'Quicksand', sans-serif;
+}
+
+/* 💳 DEBT — Lora, cold steel blue */
+body.theme-debt {
+  --accent:       #64b5f6;
+  --accent-glow:  rgba(100,181,246,0.4);
+  --bg-from:      #010d1a;
+  --bg-to:        #011422;
+  --sep-color:    #1565c0;
+  --font-body:    'Lora', Georgia, serif;
+  --font-heading: 'Lora', Georgia, serif;
+  font-family:    'Lora', Georgia, serif;
+}
+
+/* 📦 MLM — Special Elite typewriter, suspicious gold */
+body.theme-mlm {
+  --accent:       #ffd54f;
+  --accent-glow:  rgba(255,213,79,0.4);
+  --bg-from:      #100d00;
+  --bg-to:        #181400;
+  --sep-color:    #f9a825;
+  --font-body:    'Special Elite', cursive;
+  --font-heading: 'Special Elite', cursive;
+  font-family:    'Special Elite', cursive;
+  font-size:      15.5px;
+}
+
+/* 🎉 PARTY — Bebas Neue headers, Quicksand body, hot pink */
+body.theme-party {
+  --accent:       #f06292;
+  --accent-glow:  rgba(240,98,146,0.4);
+  --bg-from:      #12000e;
+  --bg-to:        #1a0018;
+  --sep-color:    #ad1457;
+  --font-body:    'Quicksand', sans-serif;
+  --font-heading: 'Bebas Neue', sans-serif;
+  font-family:    'Quicksand', sans-serif;
+}
+
+body.theme-party p.chapter-header {
+  font-family:    'Bebas Neue', sans-serif;
+  letter-spacing: 0.2em;
+  font-size:      1.1em;
+}
+
+/* 🌱 RECOVERY — Lora, soft teal */
+body.theme-recovery {
+  --accent:       #4db6ac;
+  --accent-glow:  rgba(77,182,172,0.4);
+  --bg-from:      #001614;
+  --bg-to:        #001f1c;
+  --sep-color:    #00796b;
+  --font-body:    'Lora', Georgia, serif;
+  --font-heading: 'Lora', Georgia, serif;
+  font-family:    'Lora', Georgia, serif;
+}
+
+/* Neutral */
+body.theme-neutral {
+  --accent:       #9e9e9e;
+  --accent-glow:  rgba(158,158,158,0.25);
+  --bg-from:      #0d0d0d;
+  --bg-to:        #141414;
+  --sep-color:    #424242;
+  font-family:    'Lora', Georgia, serif;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: #0d0d0d; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; opacity: 0.6; }
+
+/* ── Selection ──────────────────────────────────────────── */
+::selection { background: var(--accent); color: #000; }
+
+/* ============================================================
+   ── RESTART BUTTON ──
+   ============================================================ */
+#fc-restart-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: rgba(0,0,0,0.75);
+  color: var(--fc-accent);
+  border: 1px solid var(--fc-accent);
+  border-radius: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+#fc-restart-btn:hover {
+  background: var(--fc-accent);
+  color: #000;
+  box-shadow: 0 0 16px var(--fc-accent-glow);
+  transform: scale(1.05);
+}
+
+#fc-restart-btn:active {
+  transform: scale(0.97);
+}
+
+/* ============================================================
+   ── HUD PANEL ──
+   ============================================================ */
+#fc-hud {
+  max-width: 700px;
+  margin: 0 auto 14px;
+  padding: 14px 16px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: #d8d8d0;
+  display: block;
+}
+
+.fc-hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.fc-hud-top {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 10px;
+}
+
+.fc-hud-stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fc-hud-key {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--fc-sep);
+  text-transform: uppercase;
+}
+
+.fc-hud-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fc-accent);
+}
+
+.fc-hud-money .fc-hud-num {
+  font-size: 20px;
+}
+
+/* Money colour shifts by sign */
+.fc-hud-money .fc-hud-num {
+  color: #81c784;
+}
+.fc-hud-money .fc-hud-num:has-text("-") {
+  color: #ef5350;
+}
+
+/* ── Bars ── */
+.fc-hud-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fc-hud-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+  color: #b0b0a8;
+}
+
+.fc-hud-bar-val {
+  font-weight: 700;
+  color: var(--fc-accent);
+}
+
+.fc-hud-bar-track {
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fc-hud-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease, background 0.4s ease;
+}
+
+/* HP bar colours by level */
+.fc-bar-hp .fc-hud-bar-fill { background: linear-gradient(90deg, #4caf50, #81c784); }
+body.fc-hp-medium   .fc-bar-hp .fc-hud-bar-fill { background: linear-gradient(90deg, #fbc02d, #ffeb3b); }
+body.fc-hp-low      .fc-bar-hp .fc-hud-bar-fill { background: linear-gradient(90deg, #ef6c00, #ff9800); }
+body.fc-hp-critical .fc-bar-hp .fc-hud-bar-fill {
+  background: linear-gradient(90deg, #c62828, #f44336);
+  animation: fc-hp-pulse 1.1s ease-in-out infinite;
+}
+
+.fc-bar-mp  .fc-hud-bar-fill { background: linear-gradient(90deg, #5e35b1, #9575cd); }
+.fc-bar-rep .fc-hud-bar-fill { background: linear-gradient(90deg, #00897b, #4db6ac); }
+
+/* ── Flag chips ── */
+.fc-hud-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fc-hud-flag {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  letter-spacing: 0.03em;
+  transition: all 0.3s ease;
+}
+
+.fc-hud-flag.on {
+  background: rgba(76,175,80,0.15);
+  border-color: rgba(76,175,80,0.5);
+  color: #a5d6a7;
+}
+
+.fc-hud-flag.off {
+  opacity: 0.35;
+  color: #777;
+}
+
+.fc-hud-flag.fc-hud-debt {
+  background: rgba(244,67,54,0.15);
+  border-color: rgba(244,67,54,0.5);
+  color: #ef9a9a;
+}
+
+.fc-hud-flag span {
+  margin-right: 4px;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  #fc-restart-btn {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  #fc-hud {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .fc-hud-num { font-size: 16px; }
+}

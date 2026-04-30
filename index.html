@@ -1,38 +1,118 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-
-    <title>inkyV3_final123</title>
-
+    <title>FINANCIAL CHOICES</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="style.css">
-
 </head>
-
 <body>
 
-    <div class="outerContainer">
-        <h3 class="written-in-ink"><a href="https://www.inklestudios.com/ink">WRITTEN IN INK</a></h3>
+<!-- ══ FLASH INTRO SCREEN ══ -->
+<div id="flash-intro">
+    <div class="fl-box">
+        <div class="fl-corners">
+            <span class="fl-c tl">╔</span><span class="fl-c tr">╗</span>
+            <span class="fl-c bl">╚</span><span class="fl-c br">╝</span>
+        </div>
+        <div class="fl-logo">FINANCIAL<br>CHOICES</div>
+        <div class="fl-divider">══════════════════</div>
+        <div class="fl-sub">AGE 18 · $1,000 · ONE DECISION</div>
+        <div class="fl-spacer"></div>
+        <div class="fl-press">▶ CLICK TO PLAY ◀</div>
+        <div class="fl-credit">a text adventure  v3.0</div>
+    </div>
+</div>
 
-        <div id="controls" class="buttons">
-          <a id="rewind" title="Restart story from beginning">restart</a>
-          <a id="save" title="Save progress">save</a>
-          <a id="reload" title="Reload from save point">load</a>
-          <a id="theme-switch" title="Switch theme">theme</a>
+<!-- ══ CRT VIGNETTE ══ -->
+<div id="crt-vignette"></div>
+
+<!-- ══ FIXED GAME HUD ══ -->
+<div id="game-hud">
+    <!-- Row 1: title bar -->
+    <div class="hud-row hud-row1">
+        <div class="hud-stats-l">
+            <div class="hud-stat">
+                <span class="hk">CASH</span>
+                <span class="hv" id="hud-money">$1,000</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hk">AGE</span>
+                <span class="hv" id="hud-age">18</span>
+            </div>
+            <div class="hud-stat">
+                <span class="hk">DEBT</span>
+                <span class="hv hv-debt" id="hud-debt">$0</span>
+            </div>
+        </div>
+        <div class="hud-title-center">FINANCIAL CHOICES</div>
+        <div class="hud-btns-r">
+            <button class="hud-btn" id="hud-restart-btn">↺RST</button>
+            <button class="hud-btn" id="hud-save-btn">💾SAV</button>
+            <button class="hud-btn" id="hud-load-btn">📂LOD</button>
+        </div>
+    </div>
+    <!-- Row 2: stat bars -->
+    <div class="hud-row hud-row2">
+        <div class="hud-bar-wrap">
+            <span class="hbk">HP</span>
+            <div class="hud-track"><div class="hud-fill hf-hp" id="bar-hp" style="width:100%"></div></div>
+            <span class="hbv" id="num-hp">100</span>
+        </div>
+        <div class="hud-bar-wrap">
+            <span class="hbk">MP</span>
+            <div class="hud-track"><div class="hud-fill hf-mp" id="bar-mp" style="width:100%"></div></div>
+            <span class="hbv" id="num-mp">100</span>
+        </div>
+        <div class="hud-bar-wrap">
+            <span class="hbk">REP</span>
+            <div class="hud-track"><div class="hud-fill hf-rep" id="bar-rep" style="width:66%"></div></div>
+            <span class="hbv" id="num-rep">100</span>
+        </div>
+    </div>
+    <!-- Row 3: flags -->
+    <div class="hud-row hud-row3">
+        <span class="hflag off" id="fl-mentor">🧭MENTOR</span>
+        <span class="hflag off" id="fl-fund">🛡FUND</span>
+        <span class="hflag off" id="fl-side">💼SIDE$</span>
+        <span class="hflag off hflag-streak" id="fl-streak">🌿SOBER:0mo</span>
+        <span class="hflag off hflag-debt" id="fl-debt">💳DEBTS:0</span>
+        <span class="hflag off" id="fl-theme-badge">◈ NEUTRAL</span>
+    </div>
+</div>
+
+<!-- Hidden controls required by main.js internals -->
+<div style="display:none" aria-hidden="true">
+    <a id="rewind">restart</a>
+    <a id="save">save</a>
+    <a id="reload">load</a>
+    <a id="theme-switch">theme</a>
+</div>
+
+<!-- ══ SCROLLABLE GAME AREA ══ -->
+<div class="outerContainer">
+    <div id="game-window">
+
+        <!-- Animated scene (GIF-style per theme) -->
+        <div id="scene-display">
+            <div id="scene-anim"><!-- Animated SVG injected by custom.js --></div>
+            <div id="scene-badge">SELECT YOUR PATH</div>
         </div>
 
+        <!-- Story container (required by main.js) -->
         <div id="story" class="container">
-            <div class="header">
-                <h1>inkyV3_final123</h1>
+            <div class="header" style="display:none">
+                <h1>FINANCIAL CHOICES</h1>
                 <h2 class="byline"></h2>
             </div>
         </div>
-    </div>
 
-    <script src="ink.js"></script>
-    <script src="inkyV3_final.js"></script>
-    <script src="main.js"></script>
+    </div>
+</div>
+
+<script src="ink.js"></script>
+<script src="inkyV3_final.js"></script>
+<script src="main.js"></script>
+<script src="custom.js"></script>
 </body>
 </html>

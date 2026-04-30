@@ -1,83 +1,405 @@
 /* ============================================================
-   custom.js  —  Financial Choices visual layer
-
-   Drop into your Inky web export folder.
-   DO NOT replace main.js — this runs alongside it.
-
-   Add to index.html (before </body>):
-     <script src="custom.js"></script>
-
-   Add to index.html (replacing <div id="story"></div>):
-     <div id="fc-restart-btn">↻ Restart</div>
-     <div id="fc-hud"></div>
-     <div id="path-banner"></div>
-     <div id="story"></div>
+   custom.js  —  Financial Choices  |  Flash Game Layer
+   Animated GIF-style SVG sprites + always-on HUD
    ============================================================ */
 
 (function () {
   "use strict";
 
   /* ══════════════════════════════════════════════════════════
-     SVG BANNER IMAGES — one illustrated scene per path
+     ANIMATED SVG SPRITES  (one per theme — loop like GIFs)
      ══════════════════════════════════════════════════════════ */
-  var BANNERS = {
+  var SPRITES = {
 
-    invest: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#05120b"/><stop offset="100%" stop-color="#091a0e"/></linearGradient></defs><rect width="720" height="150" fill="url(#ig)"/><g stroke="#1b5e20" stroke-width="0.5" opacity="0.4"><line x1="0" y1="30" x2="720" y2="30"/><line x1="0" y1="60" x2="720" y2="60"/><line x1="0" y1="90" x2="720" y2="90"/><line x1="0" y1="120" x2="720" y2="120"/></g><polygon points="40,130 120,110 200,100 280,80 360,65 440,45 520,35 600,20 680,10 680,150 40,150" fill="#4caf50" opacity="0.08"/><polyline points="40,130 120,110 200,100 280,80 360,65 440,45 520,35 600,20 680,10" fill="none" stroke="#4caf50" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="600" cy="20" r="6" fill="#81c784"/><text x="36" y="26" font-family="monospace" font-size="12" fill="#4caf50" opacity="0.7">PORTFOLIO GROWTH</text></svg>',
+    /* ─── NEUTRAL: pulsing coin + floating $$ ─── */
+    neutral:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* pixel grid */
+      '<line x1="0" y1="50" x2="760" y2="50" stroke="#0a200a" stroke-width="1"/>' +
+      '<line x1="0" y1="100" x2="760" y2="100" stroke="#0a200a" stroke-width="1"/>' +
+      '<line x1="0" y1="150" x2="760" y2="150" stroke="#0a200a" stroke-width="1"/>' +
+      /* big $ pulse */
+      '<text x="380" y="115" text-anchor="middle" dominant-baseline="middle" font-family="monospace" font-size="90" font-weight="bold" fill="#00ff41" opacity="0.12">' +
+      '$<animate attributeName="opacity" values="0.1;0.22;0.1" dur="2.2s" repeatCount="indefinite"/>' +
+      '<animateTransform attributeName="transform" type="scale" values="1;1.04;1" dur="2.2s" additive="sum" repeatCount="indefinite"/>' +
+      '</text>' +
+      /* floating mini $ */
+      '<text x="80"  y="60" font-family="monospace" font-size="16" fill="#00ff41" opacity="0.4">$<animateTransform attributeName="transform" type="translate" values="0 0;0 -50" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0" dur="3s" repeatCount="indefinite"/></text>' +
+      '<text x="200" y="140" font-family="monospace" font-size="12" fill="#00cc33" opacity="0.3">$<animateTransform attributeName="transform" type="translate" values="0 0;0 -60" dur="4s" begin="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0" dur="4s" begin="1s" repeatCount="indefinite"/></text>' +
+      '<text x="560" y="80" font-family="monospace" font-size="14" fill="#00ff41" opacity="0.35">$<animateTransform attributeName="transform" type="translate" values="0 0;0 -45" dur="3.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.35;0" dur="3.5s" begin="0.5s" repeatCount="indefinite"/></text>' +
+      '<text x="680" y="120" font-family="monospace" font-size="18" fill="#00cc33" opacity="0.3">$<animateTransform attributeName="transform" type="translate" values="0 0;0 -55" dur="5s" begin="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0" dur="5s" begin="2s" repeatCount="indefinite"/></text>' +
+      /* title */
+      '<text x="380" y="30" text-anchor="middle" font-family="monospace" font-size="13" fill="#00ff41" opacity="0.75" letter-spacing="6">FINANCIAL CHOICES</text>' +
+      '<text x="380" y="185" text-anchor="middle" font-family="monospace" font-size="9" fill="#336633" letter-spacing="4">AGE 18  ·  $1,000  ·  ONE DECISION</text>' +
+      '</svg>',
 
-    crypto: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#08001a"/><stop offset="100%" stop-color="#100025"/></linearGradient></defs><rect width="720" height="150" fill="url(#cg)"/><polyline points="20,80 60,40 100,95 140,30 180,110 220,50 260,120 300,35 340,90 380,20 420,100 460,55 500,130 540,40 580,70 620,25 680,85" fill="none" stroke="#ce93d8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="380" cy="20" r="7" fill="#e040fb" opacity="0.9"/><line x1="490" y1="10" x2="510" y2="145" stroke="#ef5350" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.6"/><text x="514" y="22" font-family="monospace" font-size="9" fill="#ef5350" opacity="0.8">CRASH</text><text x="22" y="22" font-family="monospace" font-size="11" fill="#ce93d8" opacity="0.7">$DONUT  •  LIVE CHART</text></svg>',
+    /* ─── INVEST: stock chart draws itself ─── */
+    invest:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* grid lines */
+      '<line x1="50" y1="35" x2="750" y2="35" stroke="#0d2a0d" stroke-width="1"/>' +
+      '<line x1="50" y1="70" x2="750" y2="70" stroke="#0d2a0d" stroke-width="1"/>' +
+      '<line x1="50" y1="105" x2="750" y2="105" stroke="#0d2a0d" stroke-width="1"/>' +
+      '<line x1="50" y1="140" x2="750" y2="140" stroke="#0d2a0d" stroke-width="1"/>' +
+      '<line x1="50" y1="175" x2="750" y2="175" stroke="#0d2a0d" stroke-width="1"/>' +
+      /* y-axis */
+      '<line x1="50" y1="20" x2="50" y2="180" stroke="#1a4a1a" stroke-width="1.5"/>' +
+      /* chart fill */
+      '<polygon points="50,168 160,150 270,128 380,100 490,70 600,45 700,22 730,15 730,180 50,180" fill="#00e676" opacity="0.07"/>' +
+      /* animated chart line */
+      '<polyline points="50,168 160,150 270,128 380,100 490,70 600,45 700,22 730,15"' +
+      ' fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"' +
+      ' stroke-dasharray="920" stroke-dashoffset="920">' +
+      '<animate attributeName="stroke-dashoffset" from="920" to="0" dur="2.8s" fill="freeze" repeatCount="indefinite" begin="0s"/>' +
+      '</polyline>' +
+      /* glowing peak dot */
+      '<circle cx="730" cy="15" r="5" fill="#69f0ae" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0;0;1" keyTimes="0;0.85;0.9;1" dur="2.8s" fill="freeze" repeatCount="indefinite"/>' +
+      '<animate attributeName="r" values="5;8;5" dur="1.4s" begin="2.8s" repeatCount="indefinite"/>' +
+      '</circle>' +
+      /* +% label (appears after draw) */
+      '<text x="695" y="10" font-family="monospace" font-size="10" fill="#69f0ae" opacity="0">' +
+      '▲+247%<animate attributeName="opacity" values="0;0;1" keyTimes="0;0.9;1" dur="2.8s" fill="freeze" repeatCount="indefinite"/>' +
+      '</text>' +
+      /* axis labels */
+      '<text x="4" y="178" font-family="monospace" font-size="8" fill="#1a4a1a">$0</text>' +
+      '<text x="4" y="30" font-family="monospace" font-size="8" fill="#1a4a1a">∞</text>' +
+      '<text x="55" y="194" font-family="monospace" font-size="9" fill="#00e676" opacity="0.5" letter-spacing="3">PORTFOLIO GROWTH</text>' +
+      '</svg>',
 
-    gamble: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0303"/><stop offset="100%" stop-color="#0d0101"/></linearGradient></defs><rect width="720" height="150" fill="url(#gg)"/><rect x="80" y="35" width="52" height="76" rx="5" fill="#111" stroke="#444" stroke-width="1"/><rect x="84" y="39" width="44" height="68" rx="3" fill="#1a1a1a"/><text x="88" y="58" font-family="Georgia,serif" font-size="20" fill="#ef5350">A</text><text x="88" y="78" font-family="Georgia,serif" font-size="16" fill="#ef5350">♠</text><rect x="148" y="35" width="52" height="76" rx="5" fill="#111" stroke="#444" stroke-width="1"/><rect x="152" y="39" width="44" height="68" rx="3" fill="#1a1a1a"/><text x="156" y="58" font-family="Georgia,serif" font-size="20" fill="#e8e8e0">K</text><text x="156" y="78" font-family="Georgia,serif" font-size="16" fill="#e8e8e0">♦</text><rect x="560" y="40" width="50" height="50" rx="8" fill="#e8e8e0"/><circle cx="575" cy="55" r="4" fill="#111"/><circle cx="595" cy="55" r="4" fill="#111"/><circle cx="585" cy="65" r="4" fill="#111"/><circle cx="575" cy="75" r="4" fill="#111"/><circle cx="595" cy="75" r="4" fill="#111"/><circle cx="340" cy="80" r="22" fill="#1b5e20" stroke="#4caf50" stroke-width="2"/><text x="328" y="85" font-family="Georgia" font-size="11" fill="#fff" font-weight="bold">$100</text><text x="22" y="24" font-family="sans-serif" font-size="12" fill="#ef5350" opacity="0.7" letter-spacing="2">THE HOUSE ALWAYS WINS</text></svg>',
+    /* ─── CRYPTO: chaotic candles + blinking CRASH ─── */
+    crypto:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* grid */
+      '<line x1="0" y1="50" x2="760" y2="50" stroke="#1a003a" stroke-width="1"/>' +
+      '<line x1="0" y1="100" x2="760" y2="100" stroke="#1a003a" stroke-width="1"/>' +
+      '<line x1="0" y1="150" x2="760" y2="150" stroke="#1a003a" stroke-width="1"/>' +
+      /* candles — each appears after a delay */
+      /* green candles (up) */
+      '<g opacity="0"><rect x="40" y="70" width="18" height="60" fill="#00e676"/><line x1="49" y1="55" x2="49" y2="70" stroke="#00e676" stroke-width="2"/><line x1="49" y1="130" x2="49" y2="155" stroke="#00e676" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.1s" fill="freeze"/></g>' +
+      '<g opacity="0"><rect x="110" y="55" width="18" height="75" fill="#00e676"/><line x1="119" y1="40" x2="119" y2="55" stroke="#00e676" stroke-width="2"/><line x1="119" y1="130" x2="119" y2="160" stroke="#00e676" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.3s" fill="freeze"/></g>' +
+      /* red candles (down) */
+      '<g opacity="0"><rect x="180" y="95" width="18" height="70" fill="#ff5252"/><line x1="189" y1="75" x2="189" y2="95" stroke="#ff5252" stroke-width="2"/><line x1="189" y1="165" x2="189" y2="180" stroke="#ff5252" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.5s" fill="freeze"/></g>' +
+      '<g opacity="0"><rect x="250" y="45" width="18" height="50" fill="#00e676"/><line x1="259" y1="30" x2="259" y2="45" stroke="#00e676" stroke-width="2"/><line x1="259" y1="95" x2="259" y2="120" stroke="#00e676" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.7s" fill="freeze"/></g>' +
+      '<g opacity="0"><rect x="320" y="110" width="18" height="65" fill="#ff5252"/><line x1="329" y1="85" x2="329" y2="110" stroke="#ff5252" stroke-width="2"/><line x1="329" y1="175" x2="329" y2="190" stroke="#ff5252" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="0.9s" fill="freeze"/></g>' +
+      '<g opacity="0"><rect x="390" y="30" width="18" height="90" fill="#00e676"/><line x1="399" y1="15" x2="399" y2="30" stroke="#00e676" stroke-width="2"/><line x1="399" y1="120" x2="399" y2="145" stroke="#00e676" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="1.1s" fill="freeze"/></g>' +
+      /* CRASH zone — big red candles */
+      '<g opacity="0"><rect x="460" y="120" width="18" height="70" fill="#ff5252"/><line x1="469" y1="90" x2="469" y2="120" stroke="#ff5252" stroke-width="2"/><line x1="469" y1="190" x2="469" y2="200" stroke="#ff5252" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="1.3s" fill="freeze"/></g>' +
+      '<g opacity="0"><rect x="530" y="140" width="18" height="55" fill="#ff5252"/><line x1="539" y1="110" x2="539" y2="140" stroke="#ff5252" stroke-width="2"/><animate attributeName="opacity" from="0" to="1" dur="0.2s" begin="1.5s" fill="freeze"/></g>' +
+      /* crash divider */
+      '<line x1="450" y1="5" x2="450" y2="200" stroke="#ff5252" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.5">' +
+      '<animate attributeName="opacity" values="0;0;0.5" keyTimes="0;0.8;1" dur="1.5s" fill="freeze"/>' +
+      '</line>' +
+      /* CRASH text */
+      '<text x="458" y="22" font-family="monospace" font-size="14" fill="#ff5252" font-weight="bold" opacity="0">' +
+      '⚠ CRASH<animate attributeName="opacity" values="0;0;1;0;1;0;1" keyTimes="0;0.82;0.85;0.88;0.91;0.95;1" dur="4s" repeatCount="indefinite"/>' +
+      '</text>' +
+      '<text x="10" y="20" font-family="monospace" font-size="10" fill="#ea80fc" opacity="0.65" letter-spacing="2">$DONUT  LIVE CHART</text>' +
+      '</svg>',
 
-    spend: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="spg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#150e00"/><stop offset="100%" stop-color="#1a1200"/></linearGradient></defs><rect width="720" height="150" fill="url(#spg)"/><rect x="60" y="50" width="55" height="65" rx="4" fill="#222" stroke="#e65100" stroke-width="1.5"/><path d="M70,50 Q87,30 105,50" fill="none" stroke="#e65100" stroke-width="2"/><rect x="130" y="45" width="65" height="72" rx="4" fill="#1a1a1a" stroke="#ffb74d" stroke-width="1.5"/><path d="M142,45 Q163,22 178,45" fill="none" stroke="#ffb74d" stroke-width="2"/><rect x="460" y="20" width="80" height="115" rx="2" fill="#f5f5f5" opacity="0.9"/><text x="465" y="35" font-family="monospace" font-size="8" fill="#333">RECEIPT</text><text x="465" y="115" font-family="monospace" font-size="8" fill="#e65100" font-weight="bold">TOTAL: $1,000</text><text x="22" y="24" font-family="sans-serif" font-size="12" fill="#ffb74d" opacity="0.7">TREAT YOURSELF</text></svg>',
+    /* ─── GAMBLE: spinning coin + slot symbols ─── */
+    gamble:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* spinning coin (scaleX oscillates 1→0.15→-1→0.15→1 = spin illusion) */
+      '<g transform="translate(380,100)">' +
+      '<ellipse cx="0" cy="0" rx="55" ry="55" fill="#b8860b" stroke="#ffd700" stroke-width="3">' +
+      '<animate attributeName="rx" values="55;8;55;8;55" dur="2s" repeatCount="indefinite"/>' +
+      '</ellipse>' +
+      '<text x="0" y="8" text-anchor="middle" font-family="monospace" font-size="28" fill="#ffd700" font-weight="bold">' +
+      '$<animate attributeName="opacity" values="1;0;1;0;1" dur="2s" repeatCount="indefinite"/>' +
+      '</text>' +
+      '</g>' +
+      /* card symbols */
+      '<text x="80"  y="110" font-family="serif" font-size="48" fill="#ff5252" opacity="0.7">♥</text>' +
+      '<text x="150" y="110" font-family="serif" font-size="48" fill="#eee"    opacity="0.7">♠</text>' +
+      '<text x="590" y="110" font-family="serif" font-size="48" fill="#ff5252" opacity="0.7">♦</text>' +
+      '<text x="660" y="110" font-family="serif" font-size="48" fill="#eee"    opacity="0.7">♣</text>' +
+      /* dice */
+      '<rect x="60" y="130" width="40" height="40" rx="4" fill="#eee" opacity="0.85"/>' +
+      '<circle cx="75" cy="145" r="4" fill="#111"/>' +
+      '<circle cx="95" cy="145" r="4" fill="#111"/>' +
+      '<circle cx="85" cy="160" r="4" fill="#111"/>' +
+      /* slot machine frame */
+      '<rect x="310" y="148" width="140" height="46" rx="3" fill="#1a0303" stroke="#ff5252" stroke-width="2"/>' +
+      '<text x="380" y="174" text-anchor="middle" font-family="monospace" font-size="11" fill="#ffd700">$100</text>' +
+      /* flashing text */
+      '<text x="380" y="20" text-anchor="middle" font-family="monospace" font-size="11" fill="#ff5252" letter-spacing="4" opacity="0.8">' +
+      'THE HOUSE ALWAYS WINS<animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.8s" repeatCount="indefinite"/>' +
+      '</text>' +
+      '</svg>',
 
-    debt: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#010e1a"/><stop offset="100%" stop-color="#011422"/></linearGradient></defs><rect width="720" height="150" fill="url(#dg)"/><rect x="60" y="30" width="200" height="110" rx="12" fill="#1a2744" stroke="#1565c0" stroke-width="1.5"/><rect x="60" y="65" width="200" height="22" fill="#1565c0" opacity="0.4"/><rect x="82" y="44" width="32" height="24" rx="4" fill="#ffd54f" opacity="0.8"/><text x="82" y="128" font-family="monospace" font-size="10" fill="#90caf9" opacity="0.8">24.99% APR</text><rect x="340" y="35" width="280" height="18" rx="4" fill="#0d1f33"/><rect x="340" y="35" width="210" height="18" rx="4" fill="#1565c0" opacity="0.7"/><text x="344" y="48" font-family="monospace" font-size="9" fill="#64b5f6">INTEREST PAID: $680</text><text x="22" y="24" font-family="Georgia,serif" font-size="12" fill="#64b5f6" opacity="0.7" font-style="italic">minimum payment accepted</text></svg>',
+    /* ─── SPEND: money flying + bouncing bag ─── */
+    spend:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* shopping bag 1 */
+      '<rect x="80" y="70" width="60" height="80" rx="4" fill="#1a0d00" stroke="#ffab40" stroke-width="2"/>' +
+      '<path d="M92,70 Q110,48 128,70" fill="none" stroke="#ffab40" stroke-width="2.5"/>' +
+      '<text x="100" y="115" font-family="monospace" font-size="14" fill="#ffab40">🛍</text>' +
+      /* shopping bag 2 */
+      '<rect x="180" y="60" width="75" height="90" rx="4" fill="#1a0d00" stroke="#ff6d00" stroke-width="2"/>' +
+      '<path d="M195,60 Q218,35 240,60" fill="none" stroke="#ff6d00" stroke-width="2.5"/>' +
+      '<text x="200" y="110" font-family="monospace" font-size="16" fill="#ff6d00">🛍</text>' +
+      /* bouncing money bag */
+      '<g>' +
+      '<animateTransform attributeName="transform" type="translate" values="0,0;0,-18;0,0;0,-10;0,0" dur="1.4s" repeatCount="indefinite"/>' +
+      '<circle cx="540" cy="105" r="45" fill="#b8860b" stroke="#ffd700" stroke-width="3"/>' +
+      '<text x="540" y="115" text-anchor="middle" font-family="monospace" font-size="22" fill="#ffd700" font-weight="bold">$</text>' +
+      '</g>' +
+      /* floating $ symbols */
+      '<text x="490" y="160" font-family="monospace" font-size="16" fill="#ffd740" opacity="0.9">$<animateTransform attributeName="transform" type="translate" values="0,0;10,-80" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0" dur="1.6s" repeatCount="indefinite"/></text>' +
+      '<text x="560" y="175" font-family="monospace" font-size="13" fill="#ffab40" opacity="0.8">$<animateTransform attributeName="transform" type="translate" values="0,0;-8,-70" dur="2s" begin="0.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="2s" begin="0.4s" repeatCount="indefinite"/></text>' +
+      '<text x="600" y="155" font-family="monospace" font-size="18" fill="#ffd740" opacity="0.7">$<animateTransform attributeName="transform" type="translate" values="0,0;5,-85" dur="1.8s" begin="0.9s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0" dur="1.8s" begin="0.9s" repeatCount="indefinite"/></text>' +
+      /* receipt */
+      '<rect x="650" y="30" width="65" height="140" rx="2" fill="#f0f0e8" opacity="0.85"/>' +
+      '<text x="658" y="48" font-family="monospace" font-size="7" fill="#333">RECEIPT</text>' +
+      '<text x="658" y="62" font-family="monospace" font-size="6" fill="#555">———————</text>' +
+      '<text x="658" y="76" font-family="monospace" font-size="6" fill="#555">ITEM 1  $140</text>' +
+      '<text x="658" y="88" font-family="monospace" font-size="6" fill="#555">ITEM 2  $280</text>' +
+      '<text x="658" y="100" font-family="monospace" font-size="6" fill="#555">ITEM 3   $80</text>' +
+      '<text x="658" y="112" font-family="monospace" font-size="6" fill="#555">ITEM 4  $500</text>' +
+      '<text x="658" y="124" font-family="monospace" font-size="6" fill="#555">———————</text>' +
+      '<text x="658" y="138" font-family="monospace" font-size="7" fill="#e65100" font-weight="bold">TOT $1000</text>' +
+      '<text x="10" y="190" font-family="monospace" font-size="10" fill="#ffab40" opacity="0.6" letter-spacing="3">TREAT YOURSELF</text>' +
+      '</svg>',
 
-    mlm: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#110d00"/><stop offset="100%" stop-color="#181400"/></linearGradient></defs><rect width="720" height="150" fill="url(#mg)"/><polygon points="360,15 520,130 200,130" fill="none" stroke="#ffd54f" stroke-width="2"/><polygon points="360,15 430,72 290,72" fill="#ffd54f" opacity="0.07"/><circle cx="360" cy="22" r="8" fill="#f9a825" opacity="0.9"/><circle cx="300" cy="68" r="6" fill="#ffd54f" opacity="0.7"/><circle cx="420" cy="68" r="6" fill="#ffd54f" opacity="0.7"/><circle cx="240" cy="118" r="5" fill="#ffd54f" opacity="0.5"/><circle cx="320" cy="118" r="5" fill="#ffd54f" opacity="0.5"/><circle cx="400" cy="118" r="5" fill="#ffd54f" opacity="0.5"/><circle cx="480" cy="118" r="5" fill="#ffd54f" opacity="0.5"/><line x1="360" y1="30" x2="300" y2="62" stroke="#f9a825" stroke-width="1" opacity="0.5"/><line x1="360" y1="30" x2="420" y2="62" stroke="#f9a825" stroke-width="1" opacity="0.5"/><text x="22" y="24" font-family="monospace" font-size="11" fill="#ffd54f" opacity="0.7">FINANCIAL FREEDOM OPPORTUNITY</text></svg>',
+    /* ─── DEBT: credit card + ticking counter ─── */
+    debt:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* credit card */
+      '<rect x="50" y="45" width="280" height="160" rx="14" fill="#0a1a2a" stroke="#40c4ff" stroke-width="2"/>' +
+      /* chip */
+      '<rect x="78" y="80" width="44" height="34" rx="4" fill="#b8860b" stroke="#ffd700" stroke-width="1.5" opacity="0.9"/>' +
+      '<line x1="78" y1="97" x2="122" y2="97" stroke="#8B6914" stroke-width="1"/>' +
+      '<line x1="100" y1="80" x2="100" y2="114" stroke="#8B6914" stroke-width="1"/>' +
+      /* card number */
+      '<text x="78" y="148" font-family="monospace" font-size="11" fill="#40c4ff" opacity="0.8" letter-spacing="4">4242 4242 4242</text>' +
+      '<text x="78" y="166" font-family="monospace" font-size="9" fill="#40c4ff" opacity="0.6">24.99% APR</text>' +
+      '<text x="265" y="166" font-family="monospace" font-size="9" fill="#40c4ff" opacity="0.6">18</text>' +
+      /* interest meter label */
+      '<text x="380" y="42" font-family="monospace" font-size="9" fill="#40c4ff" opacity="0.7" letter-spacing="2">INTEREST PAID</text>' +
+      /* interest bar fills up */
+      '<rect x="380" y="55" width="340" height="18" rx="3" fill="#001020"/>' +
+      '<rect x="380" y="55" width="0" height="18" rx="3" fill="#0091ea" opacity="0.8">' +
+      '<animate attributeName="width" from="0" to="310" dur="4s" repeatCount="indefinite"/>' +
+      '</rect>' +
+      '<text x="384" y="68" font-family="monospace" font-size="9" fill="#fff" opacity="0.9">$680 INTEREST</text>' +
+      /* debt counter: cycling numbers */
+      '<text x="380" y="110" font-family="monospace" font-size="13" fill="#40c4ff" opacity="0.7">BALANCE OWING:</text>' +
+      '<text x="380" y="135" font-family="monospace" font-size="18" fill="#ef5350" font-weight="bold">' +
+      '$1,000<animate attributeName="opacity" values="1;0" dur="0.6s" begin="0s" fill="freeze"/>' +
+      '</text>' +
+      '<text x="380" y="135" font-family="monospace" font-size="18" fill="#ef5350" font-weight="bold" opacity="0">' +
+      '$1,025<animate attributeName="opacity" values="0;1;1;0" dur="1.2s" begin="0.6s" fill="freeze"/>' +
+      '</text>' +
+      '<text x="380" y="135" font-family="monospace" font-size="18" fill="#ef5350" font-weight="bold" opacity="0">' +
+      '$1,051<animate attributeName="opacity" values="0;1;1;0" dur="1.2s" begin="1.8s" fill="freeze"/>' +
+      '</text>' +
+      '<text x="380" y="135" font-family="monospace" font-size="18" fill="#ef5350" font-weight="bold" opacity="0">' +
+      '$1,078<animate attributeName="opacity" values="0;1" dur="0.4s" begin="3s" fill="freeze"/>' +
+      '</text>' +
+      '<text x="380" y="165" font-family="monospace" font-size="9" fill="#40c4ff" opacity="0.5" letter-spacing="2">minimum payment accepted</text>' +
+      '</svg>',
 
-    party: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#12000e"/><stop offset="100%" stop-color="#1a0018"/></linearGradient></defs><rect width="720" height="150" fill="url(#pg)"/><circle cx="80" cy="30" r="5" fill="#f06292"/><circle cx="150" cy="60" r="3" fill="#ce93d8"/><circle cx="50" cy="100" r="4" fill="#ffd54f"/><circle cx="200" cy="20" r="3" fill="#4fc3f7"/><circle cx="250" cy="80" r="5" fill="#f06292"/><circle cx="500" cy="25" r="4" fill="#ffb74d"/><circle cx="560" cy="70" r="5" fill="#ce93d8"/><circle cx="620" cy="30" r="3" fill="#f06292"/><circle cx="680" cy="90" r="4" fill="#ffd54f"/><polyline points="300,90 308,60 316,100 324,50 332,85 340,70 348,95 356,55 364,80 372,65 380,90" fill="none" stroke="#f06292" stroke-width="2" opacity="0.5"/><text x="22" y="24" font-family="sans-serif" font-size="14" fill="#f06292" opacity="0.7" letter-spacing="3">LIVE FOR THE MOMENT</text></svg>',
+    /* ─── MLM: pyramid levels lighting up ─── */
+    mlm:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* pyramid outline */
+      '<polygon points="380,12 600,185 160,185" fill="none" stroke="#ffd740" stroke-width="2" opacity="0.6"/>' +
+      /* level fills (appear bottom to top) */
+      '<rect x="160" y="163" width="440" height="22" fill="#ffd740" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.12" dur="0.4s" begin="0.3s" fill="freeze"/>' +
+      '</rect>' +
+      '<rect x="211" y="138" width="338" height="22" fill="#ffd740" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.15" dur="0.4s" begin="0.8s" fill="freeze"/>' +
+      '</rect>' +
+      '<rect x="260" y="113" width="240" height="22" fill="#ffd740" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.18" dur="0.4s" begin="1.3s" fill="freeze"/>' +
+      '</rect>' +
+      '<rect x="308" y="88" width="144" height="22" fill="#ffd740" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.22" dur="0.4s" begin="1.8s" fill="freeze"/>' +
+      '</rect>' +
+      '<rect x="344" y="63" width="72" height="22" fill="#ffd740" opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.28" dur="0.4s" begin="2.3s" fill="freeze"/>' +
+      '</rect>' +
+      /* apex node */
+      '<circle cx="380" cy="14" r="9" fill="#f9a825" opacity="0">' +
+      '<animate attributeName="opacity" values="0;1" dur="0.4s" begin="2.8s" fill="freeze"/>' +
+      '<animate attributeName="r" values="9;13;9" dur="1.4s" begin="3s" repeatCount="indefinite"/>' +
+      '</circle>' +
+      /* level nodes */
+      '<circle cx="267" cy="152" r="5" fill="#ffd740" opacity="0"><animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="1.2s" fill="freeze"/></circle>' +
+      '<circle cx="493" cy="152" r="5" fill="#ffd740" opacity="0"><animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="1.2s" fill="freeze"/></circle>' +
+      /* connection lines */
+      '<line x1="380" y1="23" x2="267" y2="152" stroke="#f9a825" stroke-width="1" opacity="0"><animate attributeName="opacity" from="0" to="0.5" dur="0.4s" begin="1.3s" fill="freeze"/></line>' +
+      '<line x1="380" y1="23" x2="493" y2="152" stroke="#f9a825" stroke-width="1" opacity="0"><animate attributeName="opacity" from="0" to="0.5" dur="0.4s" begin="1.3s" fill="freeze"/></line>' +
+      /* blinking text */
+      '<text x="380" y="195" text-anchor="middle" font-family="monospace" font-size="10" fill="#ffd740" opacity="0.75" letter-spacing="3">' +
+      'FINANCIAL FREEDOM<animate attributeName="opacity" values="0.75;0.2;0.75" dur="2.5s" repeatCount="indefinite"/>' +
+      '</text>' +
+      '<text x="10" y="22" font-family="monospace" font-size="9" fill="#ffd740" opacity="0.5">OPPORTUNITY  UNLIMITED</text>' +
+      '</svg>',
 
-    recovery: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#001614"/><stop offset="100%" stop-color="#001f1c"/></linearGradient></defs><rect width="720" height="150" fill="url(#rg)"/><line x1="0" y1="105" x2="720" y2="105" stroke="#00796b" stroke-width="0.8" opacity="0.4"/><circle cx="360" cy="115" r="45" fill="#4db6ac" opacity="0.1"/><circle cx="360" cy="115" r="28" fill="#4db6ac" opacity="0.15"/><circle cx="360" cy="115" r="14" fill="#80cbc4" opacity="0.3"/><line x1="560" y1="105" x2="560" y2="75" stroke="#4caf50" stroke-width="2"/><ellipse cx="553" cy="82" rx="10" ry="6" fill="#388e3c" opacity="0.7" transform="rotate(-20 553 82)"/><ellipse cx="568" cy="78" rx="10" ry="6" fill="#4caf50" opacity="0.7" transform="rotate(20 568 78)"/><text x="22" y="24" font-family="Georgia,serif" font-size="12" fill="#4db6ac" opacity="0.7" font-style="italic">one day at a time</text></svg>',
+    /* ─── PARTY: rotating disco ball + falling confetti ─── */
+    party:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* disco ball: circle + rotating lines */
+      '<g transform="translate(380,80)">' +
+      '<circle cx="0" cy="0" r="52" fill="#111" stroke="#555" stroke-width="1.5"/>' +
+      /* horizontal mirror strips */
+      '<rect x="-52" y="-12" width="104" height="10" fill="#333" opacity="0.8"/>' +
+      '<rect x="-52" y="4"   width="104" height="10" fill="#333" opacity="0.8"/>' +
+      '<rect x="-52" y="-28" width="104" height="10" fill="#333" opacity="0.8"/>' +
+      /* rotating sparkles */
+      '<g><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="3s" repeatCount="indefinite"/>' +
+      '<line x1="0" y1="-65" x2="0" y2="-52" stroke="#ff4081" stroke-width="3" opacity="0.9"/>' +
+      '<line x1="65" y1="0" x2="52" y2="0" stroke="#ea80fc" stroke-width="3" opacity="0.9"/>' +
+      '<line x1="0" y1="65" x2="0" y2="52" stroke="#ffd740" stroke-width="3" opacity="0.9"/>' +
+      '<line x1="-65" y1="0" x2="-52" y2="0" stroke="#40c4ff" stroke-width="3" opacity="0.9"/>' +
+      '<line x1="46" y1="-46" x2="37" y2="-37" stroke="#ff4081" stroke-width="2" opacity="0.7"/>' +
+      '<line x1="46" y1="46" x2="37" y2="37" stroke="#69f0ae" stroke-width="2" opacity="0.7"/>' +
+      '<line x1="-46" y1="46" x2="-37" y2="37" stroke="#ffd740" stroke-width="2" opacity="0.7"/>' +
+      '<line x1="-46" y1="-46" x2="-37" y2="-37" stroke="#40c4ff" stroke-width="2" opacity="0.7"/>' +
+      '</g>' +
+      /* hanging wire */
+      '<line x1="0" y1="-52" x2="0" y2="-80" stroke="#666" stroke-width="1.5"/>' +
+      '</g>' +
+      /* falling confetti */
+      '<circle cx="80"  cy="-10" r="7" fill="#ff4081"><animateTransform attributeName="transform" type="translate" values="0,0;20,240" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.5s" repeatCount="indefinite"/></circle>' +
+      '<circle cx="160" cy="-10" r="5" fill="#ffd740"><animateTransform attributeName="transform" type="translate" values="0,0;-15,240" dur="2s" begin="0.3s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2s" begin="0.3s" repeatCount="indefinite"/></circle>' +
+      '<circle cx="260" cy="-10" r="6" fill="#69f0ae"><animateTransform attributeName="transform" type="translate" values="0,0;10,240" dur="2.8s" begin="0.7s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.8s" begin="0.7s" repeatCount="indefinite"/></circle>' +
+      '<circle cx="520" cy="-10" r="8" fill="#ea80fc"><animateTransform attributeName="transform" type="translate" values="0,0;-20,240" dur="2.3s" begin="1.1s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.3s" begin="1.1s" repeatCount="indefinite"/></circle>' +
+      '<circle cx="620" cy="-10" r="5" fill="#40c4ff"><animateTransform attributeName="transform" type="translate" values="0,0;15,240" dur="2.6s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.6s" begin="0.5s" repeatCount="indefinite"/></circle>' +
+      '<circle cx="700" cy="-10" r="7" fill="#ff4081"><animateTransform attributeName="transform" type="translate" values="0,0;-10,240" dur="2.1s" begin="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.1s" begin="1.6s" repeatCount="indefinite"/></circle>' +
+      '<text x="380" y="185" text-anchor="middle" font-family="monospace" font-size="11" fill="#ff4081" opacity="0.8" letter-spacing="4">' +
+      'LIVE FOR THE MOMENT<animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>' +
+      '</text>' +
+      '</svg>',
 
-    neutral: '<svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg"><rect width="720" height="150" fill="#0d0d0d"/><text x="360" y="65" dominant-baseline="middle" text-anchor="middle" font-family="Georgia,serif" font-size="28" fill="#9e9e9e" opacity="0.5" font-style="italic">Financial Choices</text><text x="360" y="100" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="11" fill="#555" letter-spacing="4">AGE 18  ·  $1,000  ·  ONE DECISION</text></svg>'
+    /* ─── RECOVERY: growing plant + rising sun ─── */
+    recovery:
+      '<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect width="760" height="200" fill="#000"/>' +
+      /* rising sun (moves up) */
+      '<g opacity="0">' +
+      '<animate attributeName="opacity" values="0;0.55" dur="2s" begin="0s" fill="freeze"/>' +
+      '<animateTransform attributeName="transform" type="translate" values="0,40;0,0" dur="2s" begin="0s" fill="freeze"/>' +
+      '<path d="M 380 120 m -60 0 a 60 60 0 0 1 120 0" fill="#ffd740" opacity="0.5"/>' +
+      '<line x1="380" y1="48" x2="380" y2="35" stroke="#ffd740" stroke-width="2.5" opacity="0.6"/>' +
+      '<line x1="422" y1="60" x2="432" y2="50" stroke="#ffd740" stroke-width="2.5" opacity="0.6"/>' +
+      '<line x1="338" y1="60" x2="328" y2="50" stroke="#ffd740" stroke-width="2.5" opacity="0.6"/>' +
+      '</g>' +
+      /* soil */
+      '<rect x="0" y="162" width="760" height="38" fill="#1a0d00" opacity="0.9"/>' +
+      '<rect x="0" y="158" width="760" height="6" fill="#2a1500" opacity="0.8"/>' +
+      /* growing stem (stroke-dashoffset draws upward) */
+      '<line x1="380" y1="162" x2="380" y2="60" stroke="#4caf50" stroke-width="4" stroke-linecap="round"' +
+      ' stroke-dasharray="102" stroke-dashoffset="102">' +
+      '<animate attributeName="stroke-dashoffset" from="102" to="0" dur="2.2s" fill="freeze" repeatCount="indefinite"/>' +
+      '</line>' +
+      /* leaves (appear after stem) */
+      '<ellipse cx="350" cy="115" rx="24" ry="13" fill="#388e3c" opacity="0" transform="rotate(-30 350 115)">' +
+      '<animate attributeName="opacity" values="0;0.9" dur="0.5s" begin="1.2s" fill="freeze"/>' +
+      '</ellipse>' +
+      '<ellipse cx="410" cy="100" rx="24" ry="13" fill="#4caf50" opacity="0" transform="rotate(30 410 100)">' +
+      '<animate attributeName="opacity" values="0;0.9" dur="0.5s" begin="1.6s" fill="freeze"/>' +
+      '</ellipse>' +
+      '<ellipse cx="360" cy="80" rx="20" ry="11" fill="#81c784" opacity="0" transform="rotate(-15 360 80)">' +
+      '<animate attributeName="opacity" values="0;0.85" dur="0.5s" begin="2s" fill="freeze"/>' +
+      '</ellipse>' +
+      /* progress bar */
+      '<rect x="50" y="138" width="660" height="12" rx="3" fill="#001a10"/>' +
+      '<rect x="50" y="138" width="0" height="12" rx="3" fill="#69f0ae" opacity="0.85">' +
+      '<animate attributeName="width" from="0" to="660" dur="2.5s" fill="freeze" repeatCount="indefinite"/>' +
+      '</rect>' +
+      '<text x="380" y="148" text-anchor="middle" font-family="monospace" font-size="7" fill="#000">RECOVERY PROGRESS</text>' +
+      '<text x="380" y="190" text-anchor="middle" font-family="monospace" font-size="9" fill="#69f0ae" opacity="0.7" letter-spacing="4">ONE DAY AT A TIME</text>' +
+      '</svg>'
   };
 
   /* ══════════════════════════════════════════════════════════
      STATE
      ══════════════════════════════════════════════════════════ */
   var THEMES = ["invest","crypto","gamble","spend","debt","mlm","party","recovery","neutral"];
+  var THEME_LABELS = {
+    invest:"◈ INVEST", crypto:"◈ CRYPTO", gamble:"◈ GAMBLE",
+    spend:"◈ SPEND", debt:"◈ DEBT", mlm:"◈ MLM",
+    party:"◈ PARTY", recovery:"◈ RECOVERY", neutral:"◈ NEUTRAL"
+  };
+  var SCENE_BADGES = {
+    invest:"PORTFOLIO MODE", crypto:"CRYPTO MODE", gamble:"CASINO MODE",
+    spend:"SPEND MODE", debt:"DEBT MODE", mlm:"MLM MODE",
+    party:"PARTY MODE", recovery:"RECOVERY MODE", neutral:"SELECT YOUR PATH"
+  };
 
   var currentTheme  = null;
   var currentEnding = null;
-  var bannerEl      = null;
-  var hudEl         = null;
-  var restartBtnEl  = null;
 
-  // Tracked stats — live values, scraped from the story text
   var stats = {
-    age:    18,
-    hp:     100,
-    mp:     100,
-    money:  1000,
-    rep:    100,
-    streak: 0,
-    debt:   0,
-    mentor: false,
-    fund:   false,
-    side:   false
+    age:18, hp:100, mp:100, money:1000, rep:100,
+    streak:0, debt:0, debtMoney:0,
+    mentor:false, fund:false, side:false
   };
+
+  /* ══════════════════════════════════════════════════════════
+     DOM REFS
+     ══════════════════════════════════════════════════════════ */
+  var sceneAnimEl  = null;
+  var sceneBadgeEl = null;
+
+  var hudMoneyEl = null;
+  var hudAgeEl   = null;
+  var hudDebtEl  = null;
+
+  var barHpEl  = null; var numHpEl  = null;
+  var barMpEl  = null; var numMpEl  = null;
+  var barRepEl = null; var numRepEl = null;
+
+  var flMentor  = null; var flFund   = null;
+  var flSide    = null; var flStreak = null;
+  var flDebt    = null; var flTheme  = null;
 
   /* ══════════════════════════════════════════════════════════
      HELPERS
      ══════════════════════════════════════════════════════════ */
-
   function clearClasses(prefix) {
-    var remove = [];
-    document.body.classList.forEach(function(c) {
-      if (c.startsWith(prefix)) remove.push(c);
-    });
-    remove.forEach(function(c) { document.body.classList.remove(c); });
+    var rem = [];
+    document.body.classList.forEach(function(c) { if (c.startsWith(prefix)) rem.push(c); });
+    rem.forEach(function(c) { document.body.classList.remove(c); });
   }
 
+  function setFlag(el, on) {
+    if (!el) return;
+    el.classList.toggle("on", on);
+    el.classList.toggle("off", !on);
+  }
+
+  function hpLevel(v) {
+    if (v >= 80) return "high";
+    if (v >= 55) return "medium";
+    if (v >= 30) return "low";
+    return "critical";
+  }
+
+  function pct(val, max) {
+    return Math.max(0, Math.min(100, Math.round(val / max * 100))) + "%";
+  }
+
+  function fmtMoney(n) {
+    if (n < 0) return "-$" + Math.abs(n).toLocaleString();
+    return "$" + n.toLocaleString();
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     THEME + SCENE
+     ══════════════════════════════════════════════════════════ */
   function setTheme(name) {
     if (name === currentTheme) return;
     if (THEMES.indexOf(name) === -1) return;
@@ -85,12 +407,15 @@
     clearClasses("fc-theme-");
     document.body.classList.add("fc-theme-" + name);
 
-    if (bannerEl) {
-      bannerEl.innerHTML = BANNERS[name] || BANNERS.neutral;
-      bannerEl.style.display = "block";
-      bannerEl.style.animation = "none";
-      bannerEl.offsetHeight;
-      bannerEl.style.animation = "";
+    if (sceneAnimEl) {
+      sceneAnimEl.innerHTML = SPRITES[name] || SPRITES.neutral;
+    }
+    if (sceneBadgeEl) {
+      sceneBadgeEl.textContent = SCENE_BADGES[name] || "SELECT YOUR PATH";
+    }
+    if (flTheme) {
+      flTheme.textContent = THEME_LABELS[name] || "◈ NEUTRAL";
+      setFlag(flTheme, true);
     }
   }
 
@@ -98,194 +423,221 @@
     if (type === currentEnding) return;
     currentEnding = type;
     clearClasses("fc-ending-");
-    if (type) document.body.classList.add("fc-ending-" + type);
+    clearClasses("ending-");
+    if (type) {
+      document.body.classList.add("fc-ending-" + type);
+      document.body.classList.add("ending-" + type);
+    }
   }
 
-  function hpLevel(val) {
-    if (val >= 80) return "high";
-    if (val >= 55) return "medium";
-    if (val >= 30) return "low";
-    return "critical";
-  }
+  /* ══════════════════════════════════════════════════════════
+     HUD UPDATE
+     ══════════════════════════════════════════════════════════ */
+  function updateHud() {
+    if (hudMoneyEl) hudMoneyEl.textContent = fmtMoney(stats.money);
+    if (hudAgeEl)   hudAgeEl.textContent   = stats.age;
+    if (hudDebtEl)  hudDebtEl.textContent  = stats.debtMoney > 0 ? fmtMoney(stats.debtMoney) : "$0";
 
-  function applyHpClass() {
+    if (barHpEl)  barHpEl.style.width  = pct(stats.hp, 100);
+    if (numHpEl)  numHpEl.textContent  = stats.hp;
+    if (barMpEl)  barMpEl.style.width  = pct(stats.mp, 100);
+    if (numMpEl)  numMpEl.textContent  = stats.mp;
+    if (barRepEl) barRepEl.style.width = pct(stats.rep, 150);
+    if (numRepEl) numRepEl.textContent = stats.rep;
+
+    /* HP color class */
     clearClasses("fc-hp-");
     document.body.classList.add("fc-hp-" + hpLevel(stats.hp));
+
+    /* flags */
+    setFlag(flMentor, stats.mentor);
+    setFlag(flFund,   stats.fund);
+    setFlag(flSide,   stats.side);
+
+    if (flStreak) {
+      flStreak.textContent = "🌿SOBER:" + stats.streak + "mo";
+      setFlag(flStreak, stats.streak > 0);
+    }
+    if (flDebt) {
+      flDebt.textContent = "💳DEBTS:" + stats.debt;
+      setFlag(flDebt, stats.debt > 0);
+    }
+
+    /* money color in HUD */
+    if (hudMoneyEl) {
+      hudMoneyEl.style.color = stats.money < 0 ? "#ef5350" : "";
+    }
+    if (hudDebtEl) {
+      hudDebtEl.style.color = stats.debtMoney > 0 ? "#ef5350" : "";
+    }
   }
 
   /* ══════════════════════════════════════════════════════════
      STAT SCRAPER
-     Reads numbers off the story text whenever a paragraph
-     appears, so the HUD can update live.
+     Reads values from ink story text as paragraphs appear
      ══════════════════════════════════════════════════════════ */
-
   function scrapeStats(text) {
-    // HP
     var m;
-    if ((m = text.match(/\bHP[:\s]+(-?\d+)/i)))    stats.hp = parseInt(m[1], 10);
-    if ((m = text.match(/\bMP[:\s]+(-?\d+)/i)))    stats.mp = parseInt(m[1], 10);
-    if ((m = text.match(/\bREP[:\s]+(-?\d+)/i)))   stats.rep = parseInt(m[1], 10);
-    if ((m = text.match(/\bAGE[:\s]+(\d+)/i)))     stats.age = parseInt(m[1], 10);
-    if ((m = text.match(/\$\s*(-?[\d,]+)/)))       stats.money = parseInt(m[1].replace(/,/g, ""), 10);
+    if ((m = text.match(/\bHP[:\s]+(-?\d+)/i)))    stats.hp    = parseInt(m[1], 10);
+    if ((m = text.match(/\bMP[:\s]+(-?\d+)/i)))    stats.mp    = parseInt(m[1], 10);
+    if ((m = text.match(/\bREP[:\s]+(-?\d+)/i)))   stats.rep   = parseInt(m[1], 10);
+    if ((m = text.match(/\bAGE[:\s]+(\d+)/i)))     stats.age   = parseInt(m[1], 10);
+    if ((m = text.match(/\$\s*(-?[\d,]+)/)))        stats.money = parseInt(m[1].replace(/,/g,""),10);
     if ((m = text.match(/STREAK[:\s]+(\d+)/i)))    stats.streak = parseInt(m[1], 10);
-    if ((m = text.match(/\bDEBT[:\s]+(\d+)/i)))    stats.debt = parseInt(m[1], 10);
+    if ((m = text.match(/\bDEBT[:\s]+(\d+)/i)))    stats.debt   = parseInt(m[1], 10);
+    if ((m = text.match(/DEBT.{1,8}\$\s*([\d,]+)/i))) stats.debtMoney = parseInt(m[1].replace(/,/g,""),10);
 
-    // Boolean flags from text content
-    if (/MENTOR ACTIVE|MENTOR \•|🧭/.test(text))   stats.mentor = true;
-    if (/EMERGENCY FUND/i.test(text))               stats.fund = true;
-    if (/SIDE INCOME/i.test(text))                  stats.side = true;
+    if (/MENTOR ACTIVE|MENTOR\s*[•·]|🧭/.test(text))   stats.mentor = true;
+    if (/EMERGENCY FUND/i.test(text))                    stats.fund   = true;
+    if (/SIDE INCOME/i.test(text))                       stats.side   = true;
   }
 
   /* ══════════════════════════════════════════════════════════
-     HUD
+     PARAGRAPH SCANNER
+     Called by MutationObserver whenever main.js adds a <p>
      ══════════════════════════════════════════════════════════ */
-
-  function buildHud() {
-    if (!hudEl) return;
-
-    function bar(label, val, max, cls) {
-      var pct = Math.max(0, Math.min(100, Math.round(val / max * 100)));
-      return ''
-        + '<div class="fc-hud-bar ' + cls + '">'
-        +   '<div class="fc-hud-bar-label">'
-        +     '<span>' + label + '</span>'
-        +     '<span class="fc-hud-bar-val">' + val + '</span>'
-        +   '</div>'
-        +   '<div class="fc-hud-bar-track">'
-        +     '<div class="fc-hud-bar-fill" style="width:' + pct + '%"></div>'
-        +   '</div>'
-        + '</div>';
-    }
-
-    function flag(label, on, icon) {
-      return '<div class="fc-hud-flag ' + (on ? 'on' : 'off') + '"><span>' + icon + '</span> ' + label + '</div>';
-    }
-
-    var moneyDisplay = stats.money >= 0
-      ? "$" + stats.money.toLocaleString()
-      : "-$" + Math.abs(stats.money).toLocaleString();
-
-    hudEl.innerHTML = ''
-      + '<div class="fc-hud-row fc-hud-top">'
-      +   '<div class="fc-hud-stat-block"><span class="fc-hud-key">AGE</span><span class="fc-hud-num">' + stats.age + '</span></div>'
-      +   '<div class="fc-hud-stat-block fc-hud-money"><span class="fc-hud-key">CASH</span><span class="fc-hud-num">' + moneyDisplay + '</span></div>'
-      + '</div>'
-      + '<div class="fc-hud-bars">'
-      +   bar("Physical Health", stats.hp, 100, "fc-bar-hp")
-      +   bar("Mental Health",   stats.mp, 100, "fc-bar-mp")
-      +   bar("Friends / Rep",   stats.rep, 150, "fc-bar-rep")
-      + '</div>'
-      + '<div class="fc-hud-flags">'
-      +   flag("Mentor",         stats.mentor, "🧭")
-      +   flag("Emergency Fund", stats.fund,   "🛡️")
-      +   flag("Side Income",    stats.side,   "💼")
-      + (stats.streak > 0 ? '<div class="fc-hud-flag on"><span>🌿</span> Sober ' + stats.streak + 'mo</div>' : '')
-      + (stats.debt > 0 ? '<div class="fc-hud-flag on fc-hud-debt"><span>💳</span> Debts: ' + stats.debt + '</div>' : '')
-      + '</div>';
-
-    applyHpClass();
-  }
-
-  /* ══════════════════════════════════════════════════════════
-     RESTART BUTTON
-     ══════════════════════════════════════════════════════════ */
-
-  function setupRestartButton() {
-    if (!restartBtnEl) return;
-    restartBtnEl.addEventListener("click", function () {
-      if (!confirm("Restart the story from the beginning?")) return;
-
-      // Reset visual state
-      stats = { age:18, hp:100, mp:100, money:1000, rep:100,
-                streak:0, debt:0, mentor:false, fund:false, side:false };
-      buildHud();
-      setTheme("neutral");
-      setEnding(null);
-
-      // Reload — the cleanest restart since we don't know
-      // exactly how Inky's main.js manages state.
-      window.location.reload();
-    });
-  }
-
-  /* ══════════════════════════════════════════════════════════
-     PARAGRAPH OBSERVER
-     ══════════════════════════════════════════════════════════ */
-
   function scanParagraph(p) {
     var text = p.textContent || "";
 
-    // Tag detection
-    var themeMatch  = text.match(/#theme:(\w+)/);
-    var endingMatch = text.match(/#ending:(\w+)/);
+    /* detect theme/ending commands embedded in story text */
+    var themeM  = text.match(/#theme[:\s]+(\w+)/i);
+    var endingM = text.match(/#ending[:\s]+(\w+)/i);
+    if (themeM)  setTheme(themeM[1].toLowerCase());
+    if (endingM) setEnding(endingM[1].toLowerCase());
 
-    if (themeMatch)  setTheme(themeMatch[1]);
-    if (endingMatch) setEnding(endingMatch[1]);
-
-    // Scrape stats
+    /* scrape stats and refresh HUD */
     scrapeStats(text);
-    buildHud();
+    updateHud();
 
-    // Visual class
+    /* add reveal class */
     p.classList.add("fc-new-para");
-    if (/^[\s━╔╗╚╝║═]+/.test(text.trim())) {
-      p.classList.add("fc-header-line");
-    }
 
-    // Hide raw "#theme:" / "#ending:" tag lines if Inky leaks them
-    if (/^\s*#\w+:\w+/.test(text.trim())) {
+    /* tag hidden stat-dump lines */
+    if (/^\s*#\w+:\w+/.test(text.trim()) || /^\s*#theme/i.test(text.trim())) {
       p.style.display = "none";
     }
 
-    // Wrap HP value with coloured span
+    /* style chapter header dashes */
+    if (/^[\s━─═╔╗╚╝║═\-─]{3,}/.test(text.trim())) {
+      p.classList.add("fc-header-line");
+    }
+
+    /* color HP values inline */
     if (/HP:\s*-?\d+/i.test(text)) {
-      p.innerHTML = p.innerHTML.replace(
-        /\bHP:(\s*)(-?\d+)/gi,
-        'HP:$1<span class="fc-hp-val">$2</span>'
-      );
+      p.innerHTML = p.innerHTML.replace(/\bHP:(\s*)(-?\d+)/gi,
+        'HP:$1<span style="color:var(--accent);text-shadow:0 0 6px var(--glow)">$2</span>');
     }
   }
 
+  /* ══════════════════════════════════════════════════════════
+     MUTATION OBSERVER — watches for new paragraphs
+     ══════════════════════════════════════════════════════════ */
   function observeStory() {
     var storyEl = document.getElementById("story");
     if (!storyEl) return;
 
-    // Scan anything already there
     storyEl.querySelectorAll("p").forEach(scanParagraph);
 
-    var observer = new MutationObserver(function (mutations) {
-      mutations.forEach(function (m) {
-        m.addedNodes.forEach(function (node) {
-          if (node.nodeType === 1) {
-            if (node.tagName === "P") scanParagraph(node);
-            node.querySelectorAll && node.querySelectorAll("p").forEach(scanParagraph);
-          }
+    var obs = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        m.addedNodes.forEach(function(node) {
+          if (node.nodeType !== 1) return;
+          if (node.tagName === "P") scanParagraph(node);
+          if (node.querySelectorAll) node.querySelectorAll("p").forEach(scanParagraph);
         });
       });
     });
-    observer.observe(storyEl, { childList: true, subtree: true });
+    obs.observe(storyEl, { childList: true, subtree: true });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     FLASH INTRO
+     ══════════════════════════════════════════════════════════ */
+  function setupIntro() {
+    var intro = document.getElementById("flash-intro");
+    if (!intro) return;
+
+    function dismiss(e) {
+      e.stopPropagation();
+      intro.style.transition = "opacity 0.4s steps(4)";
+      intro.style.opacity = "0";
+      setTimeout(function() { intro.style.display = "none"; }, 420);
+    }
+
+    intro.addEventListener("click", dismiss);
+    document.addEventListener("keydown", function(e) {
+      if (intro.style.display !== "none") dismiss(e);
+    }, { once: true });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     HUD BUTTONS — proxy to hidden main.js controls
+     ══════════════════════════════════════════════════════════ */
+  function setupHudButtons() {
+    /* RESTART: reset our state then trigger main.js rewind */
+    var restartBtn = document.getElementById("hud-restart-btn");
+    var rewindEl   = document.getElementById("rewind");
+    if (restartBtn && rewindEl) {
+      restartBtn.addEventListener("click", function() {
+        stats = { age:18, hp:100, mp:100, money:1000, rep:100,
+                  streak:0, debt:0, debtMoney:0,
+                  mentor:false, fund:false, side:false };
+        setTheme("neutral");
+        setEnding(null);
+        updateHud();
+        rewindEl.click();
+      });
+    }
+
+    /* SAVE */
+    var saveBtn = document.getElementById("hud-save-btn");
+    var saveEl  = document.getElementById("save");
+    if (saveBtn && saveEl) {
+      saveBtn.addEventListener("click", function() {
+        saveEl.click();
+        /* brief flash feedback */
+        saveBtn.textContent = "✓ OK!";
+        setTimeout(function() { saveBtn.textContent = "💾SAV"; }, 900);
+      });
+    }
+
+    /* LOAD */
+    var loadBtn = document.getElementById("hud-load-btn");
+    var reloadEl = document.getElementById("reload");
+    if (loadBtn && reloadEl) {
+      loadBtn.addEventListener("click", function() { reloadEl.click(); });
+    }
   }
 
   /* ══════════════════════════════════════════════════════════
      INIT
      ══════════════════════════════════════════════════════════ */
-
   function init() {
-    bannerEl     = document.getElementById("path-banner");
-    hudEl        = document.getElementById("fc-hud");
-    restartBtnEl = document.getElementById("fc-restart-btn");
+    sceneAnimEl  = document.getElementById("scene-anim");
+    sceneBadgeEl = document.getElementById("scene-badge");
+    hudMoneyEl   = document.getElementById("hud-money");
+    hudAgeEl     = document.getElementById("hud-age");
+    hudDebtEl    = document.getElementById("hud-debt");
+    barHpEl      = document.getElementById("bar-hp");
+    numHpEl      = document.getElementById("num-hp");
+    barMpEl      = document.getElementById("bar-mp");
+    numMpEl      = document.getElementById("num-mp");
+    barRepEl     = document.getElementById("bar-rep");
+    numRepEl     = document.getElementById("num-rep");
+    flMentor     = document.getElementById("fl-mentor");
+    flFund       = document.getElementById("fl-fund");
+    flSide       = document.getElementById("fl-side");
+    flStreak     = document.getElementById("fl-streak");
+    flDebt       = document.getElementById("fl-debt");
+    flTheme      = document.getElementById("fl-theme-badge");
 
-    document.body.classList.add("fc-theme-neutral");
+    /* set initial theme */
+    setTheme("neutral");
     document.body.classList.add("fc-hp-high");
-    currentTheme = "neutral";
+    updateHud();
 
-    if (bannerEl) {
-      bannerEl.innerHTML = BANNERS.neutral;
-      bannerEl.style.display = "block";
-    }
-
-    setupRestartButton();
-    buildHud();
+    setupHudButtons();
+    setupIntro();
     observeStory();
   }
 
